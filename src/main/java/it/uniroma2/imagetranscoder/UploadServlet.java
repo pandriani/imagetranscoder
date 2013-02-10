@@ -21,12 +21,18 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
-public class UploadServlet extends HttpServlet {
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Histogram;
 
+public class UploadServlet extends HttpServlet {
+	
+	private final Counter imageCounter = WebAppContextListener.mRegistry.newCounter(UploadServlet.class, "processed-images");
+	private final Histogram requestImageSize = WebAppContextListener.mRegistry.newHistogram(UploadServlet.class, "image-input-size");
+	
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		try {
-
+			imageCounter.inc();
 			List<FileItem> items = new ServletFileUpload(
 					new DiskFileItemFactory()).parseRequest(request);
 			ImageTranscoder imageTranscoder = new ImageTranscoder();
@@ -37,7 +43,6 @@ public class UploadServlet extends HttpServlet {
 					// type="text|radio|checkbox|etc", select, etc).
 					if (item.getFieldName().equals("filter")) {
 						filterToApply = Integer.parseInt(item.getString());
-						System.out.println(filterToApply);
 					}
 				} else {
 					// Process form file field (input type="file").
@@ -45,21 +50,17 @@ public class UploadServlet extends HttpServlet {
 					// String filename = FilenameUtils.getName(item.getName());
 					InputStream filecontent = item.getInputStream();
 					
+					long sizeInKb = item.getSize()/1024;
+					requestImageSize.update(sizeInKb);
+					
 					
 					ImageResponse imageResponse	= imageTranscoder.apply(filterToApply, filecontent);
-
 					response.setContentType(imageResponse.getContentType());
-					// Save it if needed
-					// String pathToWeb =
-					// getServletContext().getRealPath(File.separator);
-					// File f = new File(pathToWeb + "grey.jpg");
-					// save the newly created image in a new file.
-					// ImageIO.write(cat, "jpg", f);
-					// BufferedImage bi = ImageIO.read(f);
 					OutputStream out = response.getOutputStream();
+					
 					ImageIO.write(imageResponse.getBufferedImage(), imageResponse.getExt(), out);
 					out.close();
-
+					
 				}
 
 			}
