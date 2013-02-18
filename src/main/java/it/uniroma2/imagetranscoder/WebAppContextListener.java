@@ -17,7 +17,7 @@ public class WebAppContextListener implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent sce) {
 		System.out.println("contextInitialized");
 		try {
-			GraphiteReporter.enable(mRegistry, 1, TimeUnit.SECONDS, "ec2-23-20-108-80.compute-1.amazonaws.com", 2003, InetAddress.getLocalHost().getHostName());
+			GraphiteReporter.enable(mRegistry, 1, TimeUnit.SECONDS, "ec2-23-23-51-229.compute-1.amazonaws.com", 2003, "AWS-" + InetAddress.getLocalHost().getHostName());
 			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();

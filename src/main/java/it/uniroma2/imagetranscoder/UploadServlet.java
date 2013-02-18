@@ -1,13 +1,10 @@
 package it.uniroma2.imagetranscoder;
 
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
@@ -17,22 +14,28 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
-
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Meter;
 
+@SuppressWarnings("serial")
 public class UploadServlet extends HttpServlet {
 	
-	private final Counter imageCounter = WebAppContextListener.mRegistry.newCounter(UploadServlet.class, "processed-images");
-	private final Histogram requestImageSize = WebAppContextListener.mRegistry.newHistogram(UploadServlet.class, "image-input-size");
+	private final Counter requestCounter = WebAppContextListener.mRegistry.newCounter(UploadServlet.class, "requestCounter");
+	private final Histogram requestImageSize = WebAppContextListener.mRegistry.newHistogram(UploadServlet.class, "requestSize");
+	private final Meter requestRate = WebAppContextListener.mRegistry.newMeter(UploadServlet.class, "requestRate", "requestRate", TimeUnit.SECONDS);
+
 	
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		try {
-			imageCounter.inc();
+			requestCounter.inc();
+			requestRate.mark();
+			
+			@SuppressWarnings("unchecked")
 			List<FileItem> items = new ServletFileUpload(
 					new DiskFileItemFactory()).parseRequest(request);
 			ImageTranscoder imageTranscoder = new ImageTranscoder();
