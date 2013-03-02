@@ -20,6 +20,8 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.Histogram;
 import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
 
 @SuppressWarnings("serial")
 public class UploadServlet extends HttpServlet {
@@ -27,7 +29,8 @@ public class UploadServlet extends HttpServlet {
 	private final Counter requestCounter = WebAppContextListener.mRegistry.newCounter(UploadServlet.class, "requestCounter");
 	private final Histogram requestImageSize = WebAppContextListener.mRegistry.newHistogram(UploadServlet.class, "requestSize");
 	private final Meter requestRate = WebAppContextListener.mRegistry.newMeter(UploadServlet.class, "requestRate", "requestRate", TimeUnit.SECONDS);
-
+	private final Meter serviceRate = WebAppContextListener.mRegistry.newMeter(UploadServlet.class, "serviceRate", "serviceRate", TimeUnit.SECONDS);
+	private final Timer processingDuration = WebAppContextListener.mRegistry.newTimer(UploadServlet.class, "processing-duration",TimeUnit.SECONDS, TimeUnit.SECONDS);
 	
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
@@ -56,18 +59,18 @@ public class UploadServlet extends HttpServlet {
 					long sizeInKb = item.getSize()/1024;
 					requestImageSize.update(sizeInKb);
 					
-					
+					final TimerContext context = processingDuration.time();
 					ImageResponse imageResponse	= imageTranscoder.apply(filterToApply, filecontent);
+					context.stop();
 					response.setContentType(imageResponse.getContentType());
 					OutputStream out = response.getOutputStream();
-					
 					ImageIO.write(imageResponse.getBufferedImage(), imageResponse.getExt(), out);
 					out.close();
 					
 				}
 
 			}
-
+			serviceRate.mark();
 		} catch (FileUploadException e) {
 			throw new ServletException("Cannot parse multipart request.", e);
 		}
