@@ -17,20 +17,20 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.Meter;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
+import com.yammer.metrics.Counter;
+import com.yammer.metrics.Histogram;
+import com.yammer.metrics.MetricRegistry;
+import com.yammer.metrics.Meter;
+import com.yammer.metrics.Timer;
 
 @SuppressWarnings("serial")
 public class UploadServlet extends HttpServlet {
 	
-	private final Counter requestCounter = WebAppContextListener.mRegistry.newCounter(UploadServlet.class, "requestCounter");
-	private final Histogram requestImageSize = WebAppContextListener.mRegistry.newHistogram(UploadServlet.class, "requestSize");
-	private final Meter requestRate = WebAppContextListener.mRegistry.newMeter(UploadServlet.class, "requestRate", "requestRate", TimeUnit.SECONDS);
-	private final Meter serviceRate = WebAppContextListener.mRegistry.newMeter(UploadServlet.class, "serviceRate", "serviceRate", TimeUnit.SECONDS);
-	private final Timer processingDuration = WebAppContextListener.mRegistry.newTimer(UploadServlet.class, "processing-duration",TimeUnit.SECONDS, TimeUnit.SECONDS);
+	private final Counter requestCounter = WebAppContextListener.mRegistry.counter(MetricRegistry.name("requestCounter"));
+	private final Histogram requestImageSize = WebAppContextListener.mRegistry.histogram("requestSize");
+	private final Meter requestRate = WebAppContextListener.mRegistry.meter("requestRate");
+	private final Meter serviceRate = WebAppContextListener.mRegistry.meter("serviceRate");
+	private final Timer processingDuration = WebAppContextListener.mRegistry.timer("processing-duration");
 	
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
@@ -59,7 +59,7 @@ public class UploadServlet extends HttpServlet {
 					long sizeInKb = item.getSize()/1024;
 					requestImageSize.update(sizeInKb);
 					
-					final TimerContext context = processingDuration.time();
+					final Timer.Context context = processingDuration.time();
 					ImageResponse imageResponse	= imageTranscoder.apply(filterToApply, filecontent);
 					context.stop();
 					response.setContentType(imageResponse.getContentType());
