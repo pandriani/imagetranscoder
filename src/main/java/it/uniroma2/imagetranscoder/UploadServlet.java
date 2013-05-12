@@ -26,9 +26,9 @@ import com.yammer.metrics.Timer;
 @SuppressWarnings("serial")
 public class UploadServlet extends HttpServlet {
 	
-	private final Counter requestCounter = WebAppContextListener.mRegistry.counter(MetricRegistry.name("requestCounter"));
-	private final Histogram requestImageSize = WebAppContextListener.mRegistry.histogram("requestSize");
-	private final Meter requestRate = WebAppContextListener.mRegistry.meter("requestRate");
+	private final Counter requestCounter = WebAppContextListener.mRegistry.counter(MetricRegistry.name("requestCounter-inside"));
+//	private final Histogram requestImageSize = WebAppContextListener.mRegistry.histogram("requestSize");
+	private final Meter requestRate = WebAppContextListener.mRegistry.meter("requestRate-inside");
 	private final Meter serviceRate = WebAppContextListener.mRegistry.meter("serviceRate");
 	private final Timer processingDuration = WebAppContextListener.mRegistry.timer("processing-duration");
 	
@@ -57,7 +57,7 @@ public class UploadServlet extends HttpServlet {
 					InputStream filecontent = item.getInputStream();
 					
 					long sizeInKb = item.getSize()/1024;
-					requestImageSize.update(sizeInKb);
+//					requestImageSize.update(sizeInKb);
 					
 					final Timer.Context context = processingDuration.time();
 					ImageResponse imageResponse	= imageTranscoder.apply(filterToApply, filecontent);

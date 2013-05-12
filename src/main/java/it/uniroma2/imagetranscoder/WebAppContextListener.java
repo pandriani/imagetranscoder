@@ -44,7 +44,7 @@ public class WebAppContextListener implements ServletContextListener {
 			LoadAverageMonitor load = new LoadAverageMonitor(sigar);
 
 			final Graphite graphite = new Graphite(new InetSocketAddress(
-					"ec2-54-224-249-14.compute-1.amazonaws.com", 2023));
+					"ec2-184-72-70-243.compute-1.amazonaws.com", 2023));
 			final GraphiteReporter reporter = GraphiteReporter
 					.forRegistry(mRegistry)
 					.prefixedWith(

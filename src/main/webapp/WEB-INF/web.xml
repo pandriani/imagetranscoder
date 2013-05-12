@@ -4,6 +4,16 @@
 
 <web-app>
 	<display-name>Archetype Created Web Application</display-name>
+	<filter>
+		<filter-name>RequestRateFilter</filter-name>
+		<filter-class>
+			it.uniroma2.imagetranscoder.RequestRateFilter
+		</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>RequestRateFilter</filter-name>
+		<url-pattern>/uploadServlet</url-pattern>
+	</filter-mapping>
 	<listener>
 		<listener-class>it.uniroma2.imagetranscoder.WebAppContextListener</listener-class>
 	</listener>
